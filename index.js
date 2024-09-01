@@ -1,5 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 const dotenv = require('dotenv');
+const ensureStorage = require('./helpers/ensureStore');
 
 dotenv.config()
 
@@ -8,6 +9,29 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
+
+const store = ensureStorage();
+
+bot.onText(/\/create-task (.+)/, (msg, match) => {
+    try {
+        const chatId = msg.chat.id;
+        
+        // Title-1897239
+        const task = match[1];
+        const title = task.split('-')[0];
+        const remindAt = task.split('-')[1];
+    
+        store.put(`${chatId}`, {
+            title,
+            remindAt,
+        });
+    
+        bot.sendMessage(chatId, `Task "${title}" was created. Remind will be at "${remindAt}"`); 
+    } catch (error) {
+        console.log("🚀 ~ bot.onText ~ error:", error)
+        
+    }
+});
 
 // // Matches "/echo [whatever]"
 // bot.onText(/\/echo (.+)/, (msg, match) => {
@@ -24,26 +48,22 @@ const bot = new TelegramBot(token, {polling: true});
 
 // Listen for any kind of message. There are different kinds of
 // messages.
-bot.on('text', (msg) => {
-  console.log("🚀 ~ bot.on ~ msg:", msg)
-  const chatId = msg.chat.id;
-
-  // send a message to the chat acknowledging receipt of their message
-  bot.sendMessage(chatId, `Your text message: ${msg.text}`);
+bot.on('message', (msg) => {
+  console.log("🚀 ~ bot.on ~ msg:", msg);
 });
 
-bot.on('sticker', (msg) => {
-    console.log("🚀 ~ bot.on ~ msg:", msg)
-    const chatId = msg.chat.id;
+// bot.on('sticker', (msg) => {
+//     console.log("🚀 ~ bot.on ~ msg:", msg)
+//     const chatId = msg.chat.id;
   
-    // send a message to the chat acknowledging receipt of their message
-    bot.sendMessage(chatId, 'Received your sticker');
-});
+//     // send a message to the chat acknowledging receipt of their message
+//     bot.sendMessage(chatId, 'Received your sticker');
+// });
 
-bot.on('voice', (msg) => {
-    console.log("🚀 ~ bot.on ~ msg:", msg)
-    const chatId = msg.chat.id;
+// bot.on('voice', (msg) => {
+//     console.log("🚀 ~ bot.on ~ msg:", msg)
+//     const chatId = msg.chat.id;
   
-    // send a message to the chat acknowledging receipt of their message
-    bot.sendMessage(chatId, 'Received your voice');
-  });
+//     // send a message to the chat acknowledging receipt of their message
+//     bot.sendMessage(chatId, 'Received your voice');
+//   });
